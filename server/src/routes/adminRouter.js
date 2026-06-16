@@ -6,6 +6,7 @@ const CategoryController = require('../controllers/admin/AdminCategoryController
 const VideoController = require('../controllers/admin/AdminVideoController')
 const CommentController = require('../controllers/admin/AdminCommentController')
 const AdminRoadmapController = require('../controllers/admin/AdminRoadmapController')
+const AdminArticleController = require('../controllers/admin/AdminArticleController')
 const authentication = require('../middlewares/authentication')
 const authorization = require('../middlewares/authorization')
 const uploadImages = require('../middlewares/uploadImages')
@@ -46,5 +47,12 @@ router.delete('/roadmaps/:roadmapId', AdminRoadmapController.deleteRoadmap)
 router.post('/roadmaps/:roadmapId/steps', AdminRoadmapController.createStep)
 router.put('/roadmap-steps/:stepId', AdminRoadmapController.updateStep)
 router.delete('/roadmap-steps/:stepId', AdminRoadmapController.deleteStep)
+
+router.get('/articles', AdminArticleController.getAll)
+router.get('/articles/:articleId', AdminArticleController.getById)
+router.post('/articles', AdminArticleController.create)
+router.put('/articles/:articleId', AdminArticleController.update)
+router.patch('/articles/:articleId/status', AdminArticleController.updateStatus)
+router.delete('/articles/:articleId', AdminArticleController.destroy)
 
 module.exports = router
