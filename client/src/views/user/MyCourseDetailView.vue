@@ -91,6 +91,19 @@
           </div>
 
           <RouterLink to="/my-courses" class="btn-outline w-full text-sm mt-4 text-center">← Back to My Courses</RouterLink>
+
+          <!-- Certificate Button -->
+          <div v-if="data?.isPaid" class="mt-3 pt-3 border-t border-gray-100">
+            <RouterLink
+              :to="`/certificates/${route.params.courseId}`"
+              class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+              Dapatkan Sertifikat
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>

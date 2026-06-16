@@ -22,6 +22,8 @@ const errorHandler = (err, req, res, next) => {
     RoadmapAlreadyEnrolled: [400, 'You are already enrolled in this roadmap'],
     RoadmapNotEnrolled: [403, 'You are not enrolled in this roadmap'],
     StepAlreadyCompleted: [400, 'You have already completed this step'],
+    CertificateNotEligible: [403, 'You must purchase this course to get a certificate'],
+    CertificateNotFound: [404, 'Certificate not found'],
   }
 
   const [code, message] = errors[err.name] ?? [500, 'Internal server error']
