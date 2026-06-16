@@ -2,6 +2,13 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
+import { useSeoMeta } from '@/composables/useSeoMeta'
+
+useSeoMeta({
+  title: 'Artikel & Tutorial',
+  description: 'Baca artikel dan tutorial seputar pemrograman, web development, dan teknologi dari tim Bimble.id.',
+  keywords: 'tutorial programming, artikel coding, tips belajar javascript',
+})
 
 const route = useRoute()
 const router = useRouter()

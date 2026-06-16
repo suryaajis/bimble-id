@@ -1,12 +1,23 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
+import { useSeoMeta } from '@/composables/useSeoMeta'
 
 const route = useRoute()
 const router = useRouter()
 const article = ref(null)
 const loading = ref(true)
+
+const seoOptions = computed(() => article.value ? {
+  title: article.value.title,
+  description: article.value.excerpt || article.value.content?.replace(/<[^>]*>/g, '').slice(0, 160),
+  image: article.value.coverImageUrl,
+  type: 'article',
+  keywords: article.value.tags,
+} : null)
+
+useSeoMeta(seoOptions)
 
 const formatDate = (date) => new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 

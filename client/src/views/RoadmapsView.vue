@@ -77,6 +77,13 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRoadmapStore } from '@/stores/roadmap'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { useSeoMeta } from '@/composables/useSeoMeta'
+
+useSeoMeta({
+  title: 'Learning Roadmaps',
+  description: 'Ikuti jalur belajar terstruktur di Bimble.id untuk menguasai skill teknologi dari dasar hingga mahir.',
+  keywords: 'learning roadmap, jalur belajar programming, web developer roadmap',
+})
 
 const store = useRoadmapStore()
 const activeDomainId = ref(null)

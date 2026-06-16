@@ -65,6 +65,14 @@
 </template>
 
 <script setup>
+import { useSeoMeta } from '@/composables/useSeoMeta'
+
+useSeoMeta({
+  title: 'Platform E-Learning Indonesia',
+  description: 'Bimble.id — Belajar pemrograman, web development, dan teknologi bersama ribuan pelajar Indonesia. Kursus berkualitas dengan harga terjangkau.',
+  keywords: 'belajar coding, kursus programming, e-learning indonesia, belajar javascript, web development',
+})
+
 const stats = [
   { value: '500+', label: 'Courses' },
   { value: '10K+', label: 'Students' },
