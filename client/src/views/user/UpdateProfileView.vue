@@ -23,6 +23,10 @@
         </div>
       </form>
     </div>
+
+    <div class="mt-6">
+      <TelegramConnect />
+    </div>
   </div>
 </template>
 
@@ -31,6 +35,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
+import TelegramConnect from '@/components/TelegramConnect.vue'
 
 const auth = useAuthStore()
 const router = useRouter()

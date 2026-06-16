@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = require('./app')
 const { sequelize } = require('./models')
+const { startScheduler } = require('./helpers/scheduler')
 
 const PORT = process.env.PORT || 3000
 
@@ -13,6 +14,7 @@ sequelize.authenticate()
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`)
     })
+    startScheduler()
   })
   .catch((err) => {
     console.error('Unable to connect to the database:', err)

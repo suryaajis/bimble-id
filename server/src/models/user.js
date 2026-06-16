@@ -47,6 +47,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'User',
     },
+    telegramChatId: { type: DataTypes.STRING, allowNull: true },
+    telegramConnectedAt: { type: DataTypes.DATE, allowNull: true },
+    reminderEnabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   }, {
     hooks: {
       beforeCreate: (instance) => {

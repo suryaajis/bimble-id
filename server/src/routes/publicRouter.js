@@ -6,6 +6,7 @@ const UserCourseController = require('../controllers/public/UserCourseController
 const CommentController = require('../controllers/public/CommentController')
 const RatingController = require('../controllers/public/RatingController')
 const RoadmapController = require('../controllers/public/RoadmapController')
+const TelegramController = require('../controllers/public/TelegramController')
 const authentication = require('../middlewares/authentication')
 const ratingAuthorization = require('../middlewares/ratingAuthorization')
 
@@ -41,5 +42,10 @@ router.get('/my-roadmaps/:roadmapId', RoadmapController.getMyRoadmapById)
 router.post('/my-roadmaps/:roadmapId', RoadmapController.enroll)
 router.post('/my-roadmaps/steps/:stepId/complete', RoadmapController.completeStep)
 router.delete('/my-roadmaps/steps/:stepId/complete', RoadmapController.uncompleteStep)
+
+router.get('/telegram/status', TelegramController.getTelegramStatus)
+router.post('/telegram/connect-token', TelegramController.generateConnectToken)
+router.patch('/telegram/reminder', TelegramController.toggleReminder)
+router.delete('/telegram/disconnect', TelegramController.disconnectTelegram)
 
 module.exports = router
