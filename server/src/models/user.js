@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsToMany(models.Course, { through: 'UserCourses', foreignKey: 'UserId' })
+      User.hasMany(models.Course, { foreignKey: 'UserId', as: 'CreatedCourses' })
       User.hasMany(models.Comment, { foreignKey: 'UserId' })
       User.hasMany(models.Rating, { foreignKey: 'UserId' })
       User.belongsToMany(models.Roadmap, { through: 'UserRoadmaps', foreignKey: 'UserId' })
@@ -46,6 +47,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'User',
+      validate: {
+        isIn: { args: [['User', 'Instructor', 'Admin']], msg: 'Role must be User, Instructor, or Admin' },
+      },
     },
   }, {
     hooks: {

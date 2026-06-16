@@ -10,7 +10,8 @@ const routes = [
     component: () => import('@/views/CoursesView.vue'),
     beforeEnter: (to, from, next) => {
       const auth = useAuthStore()
-      if (auth.isLoggedIn && auth.isAdmin) return next('/')
+      if (auth.isLoggedIn && auth.isAdmin) return next('/admin')
+      if (auth.isLoggedIn && auth.isInstructor) return next('/instructor')
       next()
     },
   },
@@ -20,7 +21,8 @@ const routes = [
     component: () => import('@/views/CourseDetailView.vue'),
     beforeEnter: (to, from, next) => {
       const auth = useAuthStore()
-      if (auth.isLoggedIn && auth.isAdmin) return next('/')
+      if (auth.isLoggedIn && auth.isAdmin) return next('/admin')
+      if (auth.isLoggedIn && auth.isInstructor) return next('/instructor')
       next()
     },
   },
@@ -48,7 +50,8 @@ const routes = [
     component: () => import('@/views/RoadmapsView.vue'),
     beforeEnter: (to, from, next) => {
       const auth = useAuthStore()
-      if (auth.isLoggedIn && auth.isAdmin) return next('/')
+      if (auth.isLoggedIn && auth.isAdmin) return next('/admin')
+      if (auth.isLoggedIn && auth.isInstructor) return next('/instructor')
       next()
     },
   },
@@ -58,7 +61,8 @@ const routes = [
     component: () => import('@/views/RoadmapDetailView.vue'),
     beforeEnter: (to, from, next) => {
       const auth = useAuthStore()
-      if (auth.isLoggedIn && auth.isAdmin) return next('/')
+      if (auth.isLoggedIn && auth.isAdmin) return next('/admin')
+      if (auth.isLoggedIn && auth.isInstructor) return next('/instructor')
       next()
     },
   },
@@ -118,6 +122,21 @@ const routes = [
       { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/AdminUsersView.vue') },
     ],
   },
+  {
+    path: '/instructor',
+    component: () => import('@/views/instructor/InstructorLayout.vue'),
+    meta: { requiresAuth: true, requiresInstructor: true },
+    children: [
+      { path: '', name: 'InstructorDashboard', component: () => import('@/views/instructor/InstructorDashboardView.vue') },
+      { path: 'courses', name: 'InstructorCourses', component: () => import('@/views/instructor/InstructorCoursesView.vue') },
+      { path: 'courses/add', name: 'InstructorAddCourse', component: () => import('@/views/instructor/AddCourseView.vue') },
+      { path: 'courses/:courseId', name: 'InstructorCourseDetail', component: () => import('@/views/instructor/InstructorCourseDetailView.vue') },
+      { path: 'courses/:courseId/edit', name: 'InstructorUpdateCourse', component: () => import('@/views/instructor/UpdateCourseView.vue') },
+      { path: 'courses/:courseId/add-video', name: 'InstructorAddVideo', component: () => import('@/views/instructor/AddVideoView.vue') },
+      { path: 'videos/:videoId/edit', name: 'InstructorUpdateVideo', component: () => import('@/views/instructor/UpdateVideoView.vue') },
+      { path: 'sales', name: 'InstructorSales', component: () => import('@/views/instructor/InstructorSalesView.vue') },
+    ],
+  },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
@@ -132,6 +151,7 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !auth.isLoggedIn) return next('/login')
   if (to.meta.requiresAdmin && !auth.isAdmin) return next('/')
+  if (to.meta.requiresInstructor && !auth.isInstructor) return next('/')
   if (to.meta.requiresUser && !auth.isUser) return next('/')
 
   next()

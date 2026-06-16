@@ -11,6 +11,7 @@
             <span :class="difficultyClass">{{ course.difficulty }}</span>
           </div>
           <h1 class="font-heading text-3xl font-bold text-gray-900 mb-3">{{ course.name }}</h1>
+          <p v-if="course.Instructor" class="text-sm text-gray-500 mb-3">By <span class="font-medium text-gray-700">{{ course.Instructor.name }}</span></p>
           <p class="text-gray-500 leading-relaxed">{{ course.description }}</p>
         </div>
 

@@ -10,13 +10,15 @@ class UserController {
   static async register(req, res, next) {
     try {
       const { name, email, password } = req.body
-      const user = await User.create({ name, email, password, role: 'User' })
+      // Self-service signup may pick Instructor; anything else (incl. Admin) falls back to User.
+      const role = req.body.role === 'Instructor' ? 'Instructor' : 'User'
+      const user = await User.create({ name, email, password, role })
 
-      sendEmail({
-        email: user.email,
-        subject: 'Welcome to Bimble!',
-        html: `<h2>Hi ${user.name}!</h2><p>Thank you for joining Bimble. Start your learning journey today!</p>`,
-      })
+      const welcome = role === 'Instructor'
+        ? `<h2>Hi ${user.name}!</h2><p>Welcome to Bimble as an instructor. Create your first course and start sharing your knowledge!</p>`
+        : `<h2>Hi ${user.name}!</h2><p>Thank you for joining Bimble. Start your learning journey today!</p>`
+
+      sendEmail({ email: user.email, subject: 'Welcome to Bimble!', html: welcome })
 
       res.status(201).json({ name: user.name, email: user.email, role: user.role })
     } catch (err) {
