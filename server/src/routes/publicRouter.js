@@ -6,6 +6,7 @@ const UserCourseController = require('../controllers/public/UserCourseController
 const CommentController = require('../controllers/public/CommentController')
 const RatingController = require('../controllers/public/RatingController')
 const RoadmapController = require('../controllers/public/RoadmapController')
+const StudyRoomController = require('../controllers/public/StudyRoomController')
 const authentication = require('../middlewares/authentication')
 const ratingAuthorization = require('../middlewares/ratingAuthorization')
 
@@ -35,6 +36,8 @@ router.post('/comments/:videoId', CommentController.addComment)
 
 router.get('/ratings/user/:courseId', RatingController.getUserRating)
 router.post('/ratings/:courseId', ratingAuthorization, RatingController.addRating)
+
+router.get('/study-rooms', StudyRoomController.listRooms)
 
 router.get('/my-roadmaps', RoadmapController.getMyRoadmaps)
 router.get('/my-roadmaps/:roadmapId', RoadmapController.getMyRoadmapById)

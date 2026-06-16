@@ -75,6 +75,22 @@ const routes = [
     meta: { requiresAuth: true, requiresUser: true },
   },
   {
+    path: '/study-rooms',
+    name: 'StudyRooms',
+    component: () => import('@/views/StudyRoomsView.vue'),
+    beforeEnter: (to, from, next) => {
+      const auth = useAuthStore()
+      if (auth.isLoggedIn && auth.isAdmin) return next('/')
+      next()
+    },
+  },
+  {
+    path: '/study-rooms/:roomId',
+    name: 'StudyRoomDetail',
+    component: () => import('@/views/StudyRoomDetailView.vue'),
+    meta: { requiresAuth: true, requiresUser: true },
+  },
+  {
     path: '/my-courses',
     name: 'MyCourses',
     component: () => import('@/views/MyCoursesView.vue'),

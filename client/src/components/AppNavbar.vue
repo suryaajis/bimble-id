@@ -16,6 +16,7 @@
           <RouterLink v-if="!auth.isAdmin" to="/roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/roadmaps') }">Roadmaps</RouterLink>
           <RouterLink v-if="auth.isUser" to="/my-courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/my-courses') }">My Courses</RouterLink>
           <RouterLink v-if="auth.isUser" to="/my-roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/my-roadmaps') }">My Roadmaps</RouterLink>
+          <RouterLink v-if="auth.isUser" to="/study-rooms" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/study-rooms') }">Belajar Bareng</RouterLink>
           <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/admin') }">Admin</RouterLink>
         </div>
 
