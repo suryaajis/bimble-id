@@ -6,12 +6,15 @@ const UserCourseController = require('../controllers/public/UserCourseController
 const CommentController = require('../controllers/public/CommentController')
 const RatingController = require('../controllers/public/RatingController')
 const RoadmapController = require('../controllers/public/RoadmapController')
+const PortfolioController = require('../controllers/public/PortfolioController')
 const authentication = require('../middlewares/authentication')
 const ratingAuthorization = require('../middlewares/ratingAuthorization')
 
 router.post('/register', UserController.register)
 router.post('/login', UserController.login)
 router.post('/google-login', UserController.googleLogin)
+
+router.get('/portfolio/:username', PortfolioController.getPortfolio)
 
 router.get('/courses', CourseController.getAll)
 router.get('/courses/:courseId', CourseController.getById)

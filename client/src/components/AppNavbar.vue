@@ -37,6 +37,7 @@
                 <RouterLink v-if="auth.isUser" to="/profile" @click="showDropdown = false" class="dropdown-item">My Profile</RouterLink>
                 <RouterLink v-if="auth.isUser" to="/my-courses" @click="showDropdown = false" class="dropdown-item">My Courses</RouterLink>
                 <RouterLink v-if="auth.isUser" to="/my-roadmaps" @click="showDropdown = false" class="dropdown-item">My Roadmaps</RouterLink>
+                <RouterLink v-if="auth.isUser" :to="`/portfolio/${auth.name}`" @click="showDropdown = false" class="dropdown-item">Portfolio Saya</RouterLink>
                 <RouterLink v-if="auth.isAdmin" to="/admin" @click="showDropdown = false" class="dropdown-item">Admin Panel</RouterLink>
                 <hr class="my-1 border-gray-100" />
                 <button @click="logout" class="dropdown-item text-red-600 w-full text-left">Log Out</button>
