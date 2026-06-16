@@ -98,6 +98,7 @@ import { useAuthStore } from '@/stores/auth'
 import { videoSrc as getVideoSrc } from '@/composables/useYoutube'
 import api from '@/api'
 import { useSeoMeta } from '@/composables/useSeoMeta'
+import { useJsonLd } from '@/composables/useJsonLd'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,6 +117,30 @@ const seoOptions = computed(() => course.value ? {
 } : null)
 
 useSeoMeta(seoOptions)
+
+watch(course, (val) => {
+  if (!val) return
+  const existing = document.querySelector('script[data-course-ld]')
+  if (existing) existing.remove()
+  const script = document.createElement('script')
+  script.type = 'application/ld+json'
+  script.setAttribute('data-course-ld', 'true')
+  script.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: val.name,
+    description: val.description,
+    provider: { '@type': 'Organization', name: 'Bimble.id' },
+    offers: {
+      '@type': 'Offer',
+      price: val.price,
+      priceCurrency: 'IDR',
+      availability: 'https://schema.org/InStock',
+    },
+    courseLevel: val.difficulty,
+  })
+  document.head.appendChild(script)
+}, { immediate: true })
 
 const firstVideoComments = computed(() => course.value?.Videos?.[0]?.Comments || [])
 const difficultyClass = computed(() => ({ easy: 'badge-easy', medium: 'badge-medium', hard: 'badge-hard' }[course.value?.difficulty] ?? 'badge-easy'))

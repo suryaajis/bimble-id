@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
 import { useSeoMeta } from '@/composables/useSeoMeta'
@@ -18,6 +18,35 @@ const seoOptions = computed(() => article.value ? {
 } : null)
 
 useSeoMeta(seoOptions)
+
+watch(article, (val) => {
+  if (!val) return
+  const existing = document.querySelector('script[data-article-ld]')
+  if (existing) existing.remove()
+  const script = document.createElement('script')
+  script.type = 'application/ld+json'
+  script.setAttribute('data-article-ld', 'true')
+  script.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: val.title,
+    description: val.excerpt || '',
+    image: val.coverImageUrl || '',
+    datePublished: val.publishedAt,
+    dateModified: val.updatedAt,
+    author: {
+      '@type': 'Person',
+      name: val.Author?.name || 'Tim Bimble.id',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Bimble.id',
+    },
+    keywords: val.tags || '',
+    url: window.location.href,
+  })
+  document.head.appendChild(script)
+}, { immediate: true })
 
 const formatDate = (date) => new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 
