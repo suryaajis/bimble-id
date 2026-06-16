@@ -20,8 +20,27 @@
         {{ course.Course?.name }}
       </h3>
       <p class="text-xs text-gray-500 line-clamp-2 mb-3 flex-1">{{ course.Course?.description }}</p>
+
+      <!-- Progress Bar -->
+      <div class="mb-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs text-gray-500">Progress</span>
+          <span class="text-xs font-semibold" :class="progress === 100 ? 'text-green-600' : 'text-primary-600'">
+            {{ progress }}%
+          </span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-1.5">
+          <div
+            class="h-1.5 rounded-full transition-all duration-500"
+            :class="progress === 100 ? 'bg-green-500' : 'bg-primary-500'"
+            :style="{ width: progress + '%' }"
+          ></div>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between pt-3 border-t border-gray-50">
-        <span class="badge-active">Enrolled</span>
+        <span v-if="progress === 100" class="badge-active bg-green-100 text-green-700">Selesai</span>
+        <span v-else class="badge-active">Enrolled</span>
         <span class="text-xs text-primary-600 font-semibold">Continue →</span>
       </div>
     </div>
@@ -29,5 +48,8 @@
 </template>
 
 <script setup>
-defineProps({ course: { type: Object, required: true } })
+defineProps({
+  course: { type: Object, required: true },
+  progress: { type: Number, default: 0 },
+})
 </script>
