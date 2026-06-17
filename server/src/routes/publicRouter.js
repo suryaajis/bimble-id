@@ -7,6 +7,7 @@ const CommentController = require('../controllers/public/CommentController')
 const RatingController = require('../controllers/public/RatingController')
 const RoadmapController = require('../controllers/public/RoadmapController')
 const CertificateController = require('../controllers/public/CertificateController')
+const ProgressController = require('../controllers/public/ProgressController')
 const authentication = require('../middlewares/authentication')
 const ratingAuthorization = require('../middlewares/ratingAuthorization')
 
@@ -42,6 +43,10 @@ router.get('/my-roadmaps/:roadmapId', RoadmapController.getMyRoadmapById)
 router.post('/my-roadmaps/:roadmapId', RoadmapController.enroll)
 router.post('/my-roadmaps/steps/:stepId/complete', RoadmapController.completeStep)
 router.delete('/my-roadmaps/steps/:stepId/complete', RoadmapController.uncompleteStep)
+
+router.post('/progress/:videoId/complete', ProgressController.markVideoComplete)
+router.delete('/progress/:videoId/complete', ProgressController.unmarkVideoComplete)
+router.get('/progress/:courseId', ProgressController.getCourseProgress)
 
 router.get('/certificates/:courseId/info', CertificateController.getCertificateInfo)
 router.get('/certificates/:courseId', CertificateController.getCertificate)

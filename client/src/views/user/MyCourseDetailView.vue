@@ -2,6 +2,28 @@
   <div v-if="loading" class="max-w-7xl mx-auto px-4 py-10"><LoadingSpinner /></div>
 
   <div v-else-if="data" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Progress Bar -->
+    <div class="mb-6 card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-gray-700">
+          {{ progressData.completedCount }} dari {{ progressData.totalVideos }} video selesai
+        </span>
+        <span class="text-sm font-bold" :class="progressData.percentage === 100 ? 'text-green-600' : 'text-primary-600'">
+          {{ progressData.percentage }}%
+        </span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2.5">
+        <div
+          class="h-2.5 rounded-full transition-all duration-500"
+          :class="progressData.percentage === 100 ? 'bg-green-500' : 'bg-primary-600'"
+          :style="{ width: progressData.percentage + '%' }"
+        ></div>
+      </div>
+      <p v-if="progressData.percentage === 100" class="text-xs text-green-600 font-semibold mt-2">
+        Selamat! Kamu telah menyelesaikan kursus ini.
+      </p>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Main Video Area -->
       <div class="lg:col-span-2 space-y-6">
@@ -45,6 +67,40 @@
           </span>
         </div>
 
+        <!-- Mark Complete Button -->
+        <div class="flex items-center gap-3">
+          <button
+            v-if="!isActiveVideoCompleted"
+            @click="markComplete"
+            :disabled="markingProgress"
+            class="btn-brand text-sm px-5 py-2 flex items-center gap-2"
+          >
+            <svg v-if="markingProgress" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Tandai Selesai
+          </button>
+          <button
+            v-else
+            @click="unmarkComplete"
+            :disabled="markingProgress"
+            class="btn-outline text-sm px-5 py-2 flex items-center gap-2 text-green-600 border-green-300 hover:bg-green-50"
+          >
+            <svg v-if="markingProgress" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Selesai — Tandai Belum Selesai
+          </button>
+        </div>
+
         <!-- Description -->
         <div class="card p-5">
           <h2 class="font-heading font-semibold text-gray-900 mb-2">About this course</h2>
@@ -85,7 +141,14 @@
               @click="selectVideo(i)"
               :class="['w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm', activeIndex === i ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50 text-gray-700']"
             >
-              <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" :class="activeIndex === i ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'">{{ i + 1 }}</span>
+              <span
+                v-if="completedVideoIds.includes(video.id)"
+                class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-green-500 text-white"
+                title="Selesai"
+              >
+                ✓
+              </span>
+              <span v-else class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" :class="activeIndex === i ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'">{{ i + 1 }}</span>
               <span class="truncate font-medium">{{ video.name }}</span>
             </button>
           </div>
@@ -111,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -129,11 +192,64 @@ const activeIndex = ref(0)
 const commentText = ref('')
 const newRating = ref(0)
 const userRating = ref(null)
+const markingProgress = ref(false)
+
+const progressData = ref({
+  totalVideos: 0,
+  completedCount: 0,
+  percentage: 0,
+  completedVideoIds: [],
+  isCompleted: false,
+})
+
+const completedVideoIds = computed(() => progressData.value.completedVideoIds)
 
 const activeVideo = computed(() => data.value?.Course?.Videos?.[activeIndex.value])
 const activeSrc = computed(() => videoSrc(activeVideo.value))
+const isActiveVideoCompleted = computed(() =>
+  activeVideo.value ? completedVideoIds.value.includes(activeVideo.value.id) : false,
+)
 
-function selectVideo(i) { activeIndex.value = i }
+function selectVideo(i) {
+  activeIndex.value = i
+}
+
+async function loadProgress() {
+  try {
+    const { data: res } = await api.get(`/public/progress/${route.params.courseId}`)
+    progressData.value = res
+  } catch {
+    // Progress not critical; fail silently
+  }
+}
+
+async function markComplete() {
+  if (!activeVideo.value || markingProgress.value) return
+  markingProgress.value = true
+  try {
+    await api.post(`/public/progress/${activeVideo.value.id}/complete`)
+    await loadProgress()
+    toast.success('Video ditandai selesai!')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal menandai video')
+  } finally {
+    markingProgress.value = false
+  }
+}
+
+async function unmarkComplete() {
+  if (!activeVideo.value || markingProgress.value) return
+  markingProgress.value = true
+  try {
+    await api.delete(`/public/progress/${activeVideo.value.id}/complete`)
+    await loadProgress()
+    toast.info('Tanda selesai dihapus.')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Gagal mengubah status video')
+  } finally {
+    markingProgress.value = false
+  }
+}
 
 async function submitComment() {
   if (!commentText.value.trim()) return
@@ -164,6 +280,7 @@ async function loadCourse() {
 onMounted(async () => {
   try {
     await loadCourse()
+    await loadProgress()
     const { data: ratingData } = await api.get(`/public/ratings/user/${route.params.courseId}`)
     if (ratingData) userRating.value = ratingData.rating
   } catch {
