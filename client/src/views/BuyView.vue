@@ -6,8 +6,8 @@
           <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           </div>
-          <h1 class="font-heading text-2xl font-bold text-gray-900 mb-1">Pay with OVO</h1>
-          <p class="text-gray-500 text-sm">Complete your purchase below</p>
+          <h1 class="font-heading text-2xl font-bold text-gray-900 mb-1">Complete Payment</h1>
+          <p class="text-gray-500 text-sm">Choose your payment method below</p>
         </div>
 
         <div v-if="course" class="bg-gray-50 rounded-xl p-4 mb-6">
@@ -17,8 +17,31 @@
         </div>
 
         <form @submit.prevent="handleBuy" class="space-y-4">
+          <!-- Payment Method Selector -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">OVO Phone Number</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+            <div class="grid grid-cols-5 gap-2 mb-6">
+              <button
+                v-for="method in paymentMethods"
+                :key="method.value"
+                type="button"
+                @click="selectedMethod = method.value"
+                :class="[
+                  'flex flex-col items-center p-3 rounded-xl border-2 transition-all',
+                  selectedMethod === method.value
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                ]"
+              >
+                <span class="text-2xl mb-1">{{ method.icon }}</span>
+                <span class="text-xs font-medium text-gray-700">{{ method.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Phone number field (hanya untuk OVO/GoPay/DANA) -->
+          <div v-if="requiresPhone">
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ selectedMethod }} Phone Number</label>
             <div class="flex">
               <span class="inline-flex items-center px-3 py-2.5 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-gray-500 text-sm">+62</span>
               <input
@@ -31,6 +54,22 @@
               />
             </div>
             <p class="text-xs text-gray-400 mt-1">Enter without leading 0 (e.g. 8123456789)</p>
+          </div>
+
+          <!-- Redirect info (DANA/GoPay/ShopeePay) -->
+          <div v-if="isRedirect" class="mb-4 p-3 bg-orange-50 rounded-lg">
+            <p class="text-sm text-orange-700">Kamu akan diarahkan ke halaman {{ selectedMethod }} untuk menyelesaikan pembayaran.</p>
+          </div>
+
+          <!-- QRIS info -->
+          <div v-if="selectedMethod === 'QRIS'" class="mb-4 p-3 bg-blue-50 rounded-lg">
+            <p class="text-sm text-blue-700">QR Code akan ditampilkan setelah pembayaran diinisiasi</p>
+          </div>
+
+          <!-- QR Code display setelah QRIS charge -->
+          <div v-if="qrCodeUrl" class="mt-4 flex flex-col items-center">
+            <p class="text-sm font-medium text-gray-700 mb-2">Scan QR Code ini untuk membayar:</p>
+            <img :src="qrCodeUrl" alt="QRIS QR Code" class="w-48 h-48 border rounded-lg" />
           </div>
 
           <p v-if="error" class="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{{ error }}</p>
@@ -50,9 +89,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import QRCode from 'qrcode'
 import api from '@/api'
 
 const route = useRoute()
@@ -63,33 +103,74 @@ const course = ref(null)
 const phoneNumber = ref('')
 const loading = ref(false)
 const error = ref('')
+const selectedMethod = ref('OVO')
+const qrCodeUrl = ref(null)
+
+// Hanya OVO yang butuh nomor HP (push ke app). DANA/GoPay/ShopeePay pakai redirect,
+// QRIS pakai scan QR — sesuai Xendit Payment API v3.
+const paymentMethods = [
+  { value: 'OVO', label: 'OVO', icon: '💜', requiresPhone: true },
+  { value: 'GOPAY', label: 'GoPay', icon: '💚', requiresPhone: false },
+  { value: 'DANA', label: 'DANA', icon: '💙', requiresPhone: false },
+  { value: 'SHOPEEPAY', label: 'ShopeePay', icon: '🧡', requiresPhone: false },
+  { value: 'QRIS', label: 'QRIS', icon: '📷', requiresPhone: false },
+]
+
+const requiresPhone = computed(() => {
+  const method = paymentMethods.find(m => m.value === selectedMethod.value)
+  return method ? method.requiresPhone : true
+})
+
+const isRedirect = computed(() => ['DANA', 'GOPAY', 'SHOPEEPAY'].includes(selectedMethod.value))
 
 function formatPrice(price) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
 }
 
+async function doCharge(userCourseId) {
+  const { data } = await api.post('/payment/charge', {
+    userCourseId,
+    paymentMethod: selectedMethod.value,
+    phoneNumber: requiresPhone.value ? `+62${phoneNumber.value}` : undefined,
+  })
+
+  if (data.qrString) {
+    // QRIS — render qr_string mentah dari Xendit menjadi gambar QR
+    qrCodeUrl.value = await QRCode.toDataURL(data.qrString, { width: 240, margin: 1 })
+    toast.success('QRIS siap! Scan QR Code untuk menyelesaikan pembayaran.')
+  } else if (data.redirectUrl) {
+    // DANA/GoPay/ShopeePay — arahkan user ke halaman/app pembayaran
+    toast.info('Mengarahkan ke halaman pembayaran...')
+    window.location.href = data.redirectUrl
+  } else {
+    // OVO — push notifikasi ke aplikasi
+    toast.success(`Cek aplikasi ${selectedMethod.value} kamu untuk menyelesaikan pembayaran.`)
+    router.push('/my-courses')
+  }
+}
+
 async function handleBuy() {
   loading.value = true
   error.value = ''
+  qrCodeUrl.value = null
   try {
     const { data: enrollment } = await api.post(`/public/my-courses/${route.params.courseId}`)
-    await api.post('/ovo/charge', {
-      phoneNumber: `+62${phoneNumber.value}`,
-      userCourseId: enrollment.id,
-    })
-    toast.success('Payment request sent! Check your OVO app.')
-    router.push('/my-courses')
+    // Course gratis langsung lunas — tidak perlu pembayaran
+    if (enrollment.isPaid) {
+      toast.success('Course gratis, langsung terbuka!')
+      return router.push('/my-courses')
+    }
+    await doCharge(enrollment.id)
   } catch (err) {
     const msg = err.response?.data?.message || ''
-    if (msg.includes('Already')) {
+    if (msg.toLowerCase().includes('already')) {
       try {
         const { data: existing } = await api.get(`/public/my-courses/${route.params.courseId}`)
-        await api.post('/ovo/charge', {
-          phoneNumber: `+62${phoneNumber.value}`,
-          userCourseId: existing.id,
-        })
-        toast.success('Payment request sent! Check your OVO app.')
-        router.push('/my-courses')
+        if (existing.isPaid) {
+          toast.success('Course gratis, langsung terbuka!')
+          return router.push('/my-courses')
+        }
+        await doCharge(existing.id)
       } catch (innerErr) {
         error.value = innerErr.response?.data?.message || 'Payment failed.'
       }
@@ -105,6 +186,10 @@ onMounted(async () => {
   try {
     const { data } = await api.get(`/public/courses/${route.params.courseId}`)
     course.value = data
+    // Course gratis tidak perlu form pembayaran — langsung enroll & buka
+    if (!data.price || Number(data.price) <= 0) {
+      await handleBuy()
+    }
   } catch {
     router.push('/courses')
   }

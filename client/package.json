@@ -2,6 +2,7 @@
   "name": "bimble-revamp-client",
   "version": "2.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,6 +12,7 @@
     "@vueuse/core": "^10.7.0",
     "axios": "^1.6.0",
     "pinia": "^2.1.7",
+    "qrcode": "^1.5.4",
     "vue": "^3.4.0",
     "vue-router": "^4.2.5",
     "vue-toastification": "^2.0.0-rc.5"

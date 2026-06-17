@@ -29,7 +29,16 @@
             </td>
             <td class="px-5 py-4 text-gray-500">{{ user.email }}</td>
             <td class="px-5 py-4">
-              <span :class="user.role === 'Admin' ? 'badge-active' : 'badge-inactive'">{{ user.role }}</span>
+              <span v-if="user.role === 'Admin'" class="badge-active">Admin</span>
+              <select
+                v-else
+                :value="user.role"
+                @change="changeRole(user, $event.target.value)"
+                class="input-field text-xs py-1.5 max-w-[140px]"
+              >
+                <option value="User">User</option>
+                <option value="Instructor">Instructor</option>
+              </select>
             </td>
             <td class="px-5 py-4 text-gray-400">{{ formatDate(user.createdAt) }}</td>
           </tr>
@@ -42,12 +51,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useToast } from 'vue-toastification'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import api from '@/api'
 
 const users = ref([])
 const loading = ref(true)
 const search = ref('')
+const toast = useToast()
+
+async function changeRole(user, role) {
+  const previous = user.role
+  try {
+    await api.patch(`/admin/users/${user.id}/role`, { role })
+    user.role = role
+    toast.success(`${user.name} is now ${role}`)
+  } catch {
+    user.role = previous
+    toast.error('Failed to update role')
+  }
+}
 
 const filteredUsers = computed(() => {
   if (!search.value) return users.value

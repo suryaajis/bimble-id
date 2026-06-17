@@ -11,6 +11,9 @@ const errorHandler = (err, req, res, next) => {
     VideoNotFound: [404, 'Video not found'],
     CategoryNotFound: [404, 'Category not found'],
     CommentNotFound: [404, 'Comment not found'],
+    UserNotFound: [404, 'User not found'],
+    InvalidRole: [400, 'Invalid role'],
+    InvalidApprovalStatus: [400, 'Invalid approval status'],
     CourseAlreadyPurchased: [400, 'You have already purchased this course'],
     CourseNotPaid: [403, 'You must purchase this course first'],
     AlreadyRated: [400, 'You have already rated this course'],
@@ -23,6 +26,10 @@ const errorHandler = (err, req, res, next) => {
     RoadmapAlreadyEnrolled: [400, 'You are already enrolled in this roadmap'],
     RoadmapNotEnrolled: [403, 'You are not enrolled in this roadmap'],
     StepAlreadyCompleted: [400, 'You have already completed this step'],
+    CertificateNotEligible: [403, 'You must purchase this course to get a certificate'],
+    CertificateNotFound: [404, 'Certificate not found'],
+    InvalidPaymentMethod: [400, 'Invalid payment method. Supported: OVO, GOPAY, DANA, SHOPEEPAY, QRIS'],
+    PhoneNumberRequired: [400, 'Phone number is required for this payment method'],
   }
 
   const [code, message] = errors[err.name] ?? [500, 'Internal server error']

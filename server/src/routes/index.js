@@ -2,13 +2,16 @@ const express = require('express')
 const router = express.Router()
 const publicRouter = require('./publicRouter')
 const adminRouter = require('./adminRouter')
+const instructorRouter = require('./instructorRouter')
 const errorHandler = require('../middlewares/errorHandler')
 const authentication = require('../middlewares/authentication')
 const { ovoCharge, ovoStatus } = require('../helpers/xendit')
 const { generateSitemap } = require('../controllers/public/SitemapController')
+const { createPayment, checkStatus, paymentWebhook } = require('../helpers/xendit')
 
 router.use('/public', publicRouter)
 router.use('/admin', adminRouter)
+router.use('/instructor', instructorRouter)
 
 router.get('/sitemap.xml', generateSitemap)
 
@@ -28,6 +31,10 @@ Sitemap: ${clientUrl}/sitemap.xml`)
 
 router.post('/ovo/charge', authentication, ovoCharge)
 router.post('/ovo/status', ovoStatus)
+// Xendit Unified Payment API v3 — satu endpoint untuk semua metode
+router.post('/payment/charge', authentication, createPayment)
+router.get('/payment/status/:userCourseId', authentication, checkStatus)
+router.post('/payment/webhook', paymentWebhook)
 
 router.use(errorHandler)
 

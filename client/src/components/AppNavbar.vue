@@ -12,11 +12,12 @@
         <div class="hidden md:flex items-center gap-1">
           <RouterLink to="/" class="nav-link" :class="{ 'nav-link-active': $route.path === '/' }">Home</RouterLink>
           <RouterLink to="/about" class="nav-link" :class="{ 'nav-link-active': $route.path === '/about' }">About</RouterLink>
-          <RouterLink v-if="!auth.isAdmin" to="/courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/courses') }">Courses</RouterLink>
-          <RouterLink v-if="!auth.isAdmin" to="/roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/roadmaps') }">Roadmaps</RouterLink>
           <RouterLink v-if="!auth.isAdmin" to="/articles" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/articles') }">Artikel</RouterLink>
+          <RouterLink v-if="!auth.isAdmin && !auth.isInstructor" to="/courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/courses') }">Courses</RouterLink>
+          <RouterLink v-if="!auth.isAdmin && !auth.isInstructor" to="/roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/roadmaps') }">Roadmaps</RouterLink>
           <RouterLink v-if="auth.isUser" to="/my-courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/my-courses') }">My Courses</RouterLink>
           <RouterLink v-if="auth.isUser" to="/my-roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/my-roadmaps') }">My Roadmaps</RouterLink>
+          <RouterLink v-if="auth.isInstructor" to="/instructor" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/instructor') }">Instructor</RouterLink>
           <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/admin') }">Admin</RouterLink>
         </div>
 
@@ -38,6 +39,7 @@
                 <RouterLink v-if="auth.isUser" to="/profile" @click="showDropdown = false" class="dropdown-item">My Profile</RouterLink>
                 <RouterLink v-if="auth.isUser" to="/my-courses" @click="showDropdown = false" class="dropdown-item">My Courses</RouterLink>
                 <RouterLink v-if="auth.isUser" to="/my-roadmaps" @click="showDropdown = false" class="dropdown-item">My Roadmaps</RouterLink>
+                <RouterLink v-if="auth.isInstructor" to="/instructor" @click="showDropdown = false" class="dropdown-item">Instructor Dashboard</RouterLink>
                 <RouterLink v-if="auth.isAdmin" to="/admin" @click="showDropdown = false" class="dropdown-item">Admin Panel</RouterLink>
                 <hr class="my-1 border-gray-100" />
                 <button @click="logout" class="dropdown-item text-red-600 w-full text-left">Log Out</button>

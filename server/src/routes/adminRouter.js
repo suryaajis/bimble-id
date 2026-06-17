@@ -12,15 +12,17 @@ const authorization = require('../middlewares/authorization')
 const uploadImages = require('../middlewares/uploadImages')
 const { upload } = require('../helpers/multer')
 
-router.use(authentication, authorization)
+router.use(authentication, authorization('Admin'))
 
 router.get('/users', UserController.getAll)
+router.patch('/users/:userId/role', UserController.updateRole)
 
 router.get('/courses', CourseController.getAll)
 router.get('/courses/:courseId', CourseController.getById)
 router.post('/courses', upload.array('Videos', 3), uploadImages, CourseController.create)
 router.put('/courses/:courseId', CourseController.update)
 router.patch('/courses/:courseId/status', CourseController.updateStatus)
+router.patch('/courses/:courseId/approval', CourseController.updateApproval)
 
 router.get('/categories', CategoryController.getAll)
 router.post('/categories', CategoryController.create)
