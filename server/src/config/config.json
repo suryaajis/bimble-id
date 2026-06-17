@@ -2,7 +2,7 @@
   "development": {
     "username": "postgres",
     "password": "root",
-    "database": "bimble_revamp",
+    "database": "bimble_id_db",
     "host": "localhost",
     "dialect": "postgres",
     "port": 5433
@@ -10,7 +10,7 @@
   "test": {
     "username": "postgres",
     "password": "root",
-    "database": "bimble_revamp_test",
+    "database": "bimble_id_db",
     "host": "localhost",
     "dialect": "postgres"
   },

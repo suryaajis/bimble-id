@@ -1,8 +1,8 @@
-# Bimble Revamp
+# Bimble
 
 > **Be Smart, Be Humble** — A modern full-stack e-learning platform.
 
-Bimble Revamp is a complete rewrite of the original Bimble platform, built with the latest web technologies. Users can browse, purchase, and watch courses; admins can manage all content through a dedicated dashboard.
+Bimble is a complete rewrite of the original Bimble platform, built with the latest web technologies. Users can browse, purchase, and watch courses; admins can manage all content through a dedicated dashboard.
 
 ---
 
@@ -459,7 +459,7 @@ access_token: <your_jwt_token>
 
 ## Authentication
 
-Bimble Revamp uses **JWT (JSON Web Tokens)** for stateless authentication.
+Bimble uses **JWT (JSON Web Tokens)** for stateless authentication.
 
 **Flow:**
 1. User logs in via `POST /public/login` or `POST /public/google-login`
@@ -549,7 +549,7 @@ The client uses a custom Tailwind design system defined in `src/style.css`.
 
 ## YouTube Video Integration
 
-Bimble Revamp supports two video source types for every course video — admins can choose per-video.
+Bimble supports two video source types for every course video — admins can choose per-video.
 
 ### How it works
 
