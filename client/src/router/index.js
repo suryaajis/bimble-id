@@ -103,6 +103,12 @@ const routes = [
     meta: { requiresAuth: true, requiresUser: true },
   },
   {
+    path: '/certificates/:courseId',
+    name: 'Certificate',
+    component: () => import('@/views/user/CertificateView.vue'),
+    meta: { requiresAuth: true, requiresUser: true },
+  },
+  {
     path: '/admin',
     component: () => import('@/views/admin/AdminLayout.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },

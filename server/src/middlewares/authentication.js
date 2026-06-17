@@ -3,7 +3,7 @@ const { User } = require('../models')
 
 const authentication = async (req, res, next) => {
   try {
-    const token = req.headers['access_token'] || req.headers['authorization']?.split(' ')[1]
+    const token = req.headers['access_token'] || req.headers['authorization']?.split(' ')[1] || req.query['access_token']
     if (!token) throw { name: 'Unauthorized' }
 
     const decoded = verifyToken(token)

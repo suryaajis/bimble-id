@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       User.belongsToMany(models.Roadmap, { through: 'UserRoadmaps', foreignKey: 'UserId' })
       User.hasMany(models.UserRoadmap, { foreignKey: 'UserId' })
       User.hasMany(models.UserRoadmapStep, { foreignKey: 'UserId' })
+      User.hasMany(models.UserVideoProgress, { foreignKey: 'UserId' })
     }
   }
 

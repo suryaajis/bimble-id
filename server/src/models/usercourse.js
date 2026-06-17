@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     isPaid: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     chargeId: { type: DataTypes.STRING },
     referenceId: { type: DataTypes.STRING },
+    paymentMethod: { type: DataTypes.ENUM('OVO', 'GOPAY', 'DANA', 'SHOPEEPAY', 'QRIS'), allowNull: true },
   }, { sequelize, modelName: 'UserCourse' })
 
   return UserCourse

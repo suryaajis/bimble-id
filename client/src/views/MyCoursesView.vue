@@ -15,7 +15,12 @@
     </div>
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      <MyCourseCard v-for="course in courses" :key="course.id" :course="course" />
+      <MyCourseCard
+        v-for="course in courses"
+        :key="course.id"
+        :course="course"
+        :progress="progressMap[course.CourseId] ?? 0"
+      />
     </div>
   </div>
 </template>
@@ -29,12 +34,32 @@ import api from '@/api'
 
 const courses = ref([])
 const loading = ref(true)
+const progressMap = ref({})
 const toast = useToast()
+
+async function fetchProgressForCourses(courseList) {
+  const results = await Promise.allSettled(
+    courseList.map(async (c) => {
+      const { data } = await api.get(`/public/progress/${c.CourseId}`)
+      return { courseId: c.CourseId, percentage: data.percentage }
+    }),
+  )
+  const map = {}
+  results.forEach((r) => {
+    if (r.status === 'fulfilled') {
+      map[r.value.courseId] = r.value.percentage
+    }
+  })
+  progressMap.value = map
+}
 
 onMounted(async () => {
   try {
     const { data } = await api.get('/public/my-courses')
     courses.value = data
+    if (data.length > 0) {
+      await fetchProgressForCourses(data)
+    }
   } catch {
     toast.error('Failed to load your courses')
   } finally {
