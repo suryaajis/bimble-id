@@ -5,20 +5,16 @@ const adminRouter = require('./adminRouter')
 const instructorRouter = require('./instructorRouter')
 const errorHandler = require('../middlewares/errorHandler')
 const authentication = require('../middlewares/authentication')
-const { ovoCharge, ovoStatus, ewalletCharge, ewalletStatus, qrisCharge, qrisStatus } = require('../helpers/xendit')
+const { createPayment, checkStatus, paymentWebhook } = require('../helpers/xendit')
 
 router.use('/public', publicRouter)
 router.use('/admin', adminRouter)
 router.use('/instructor', instructorRouter)
 
-router.post('/ovo/charge', authentication, ovoCharge)
-router.post('/ovo/status', ovoStatus)
-
-// New unified payment routes
-router.post('/payment/ewallet/charge', authentication, ewalletCharge)
-router.post('/payment/ewallet/status', ewalletStatus)
-router.post('/payment/qris/charge', authentication, qrisCharge)
-router.post('/payment/qris/status', qrisStatus)
+// Xendit Unified Payment API v3 — satu endpoint untuk semua metode
+router.post('/payment/charge', authentication, createPayment)
+router.get('/payment/status/:userCourseId', authentication, checkStatus)
+router.post('/payment/webhook', paymentWebhook)
 
 router.use(errorHandler)
 

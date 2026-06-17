@@ -7,21 +7,45 @@
 
     <LoadingSpinner v-if="loading" />
 
-    <div v-else-if="courses.length === 0" class="text-center py-20">
-      <div class="text-6xl mb-4">📚</div>
-      <h2 class="font-heading font-bold text-xl text-gray-900 mb-2">No courses yet</h2>
-      <p class="text-gray-500 text-sm mb-6">Purchase a course to start learning.</p>
-      <RouterLink to="/courses" class="btn-brand">Browse Courses</RouterLink>
-    </div>
+    <template v-else>
+      <!-- Section: Menunggu Pembayaran -->
+      <section v-if="pendingCourses.length > 0" class="mb-10">
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="font-heading text-xl font-bold text-gray-900">Menunggu Pembayaran</h2>
+          <span class="badge-active bg-amber-100 text-amber-700">{{ pendingCourses.length }}</span>
+        </div>
+        <p class="text-gray-500 text-sm mb-4">Selesaikan pembayaran untuk membuka course berikut.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <PendingCourseCard
+            v-for="pc in pendingCourses"
+            :key="pc.id"
+            :course="pc"
+            @paid="handlePaid"
+          />
+        </div>
+      </section>
 
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      <MyCourseCard
-        v-for="course in courses"
-        :key="course.id"
-        :course="course"
-        :progress="progressMap[course.CourseId] ?? 0"
-      />
-    </div>
+      <!-- Empty state: tidak ada course berbayar maupun pending -->
+      <div v-if="courses.length === 0 && pendingCourses.length === 0" class="text-center py-20">
+        <div class="text-6xl mb-4">📚</div>
+        <h2 class="font-heading font-bold text-xl text-gray-900 mb-2">No courses yet</h2>
+        <p class="text-gray-500 text-sm mb-6">Purchase a course to start learning.</p>
+        <RouterLink to="/courses" class="btn-brand">Browse Courses</RouterLink>
+      </div>
+
+      <!-- Section: Course berbayar -->
+      <section v-if="courses.length > 0">
+        <h2 v-if="pendingCourses.length > 0" class="font-heading text-xl font-bold text-gray-900 mb-4">Course Saya</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <MyCourseCard
+            v-for="course in courses"
+            :key="course.id"
+            :course="course"
+            :progress="progressMap[course.CourseId] ?? 0"
+          />
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
@@ -29,10 +53,12 @@
 import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import MyCourseCard from '@/components/MyCourseCard.vue'
+import PendingCourseCard from '@/components/PendingCourseCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import api from '@/api'
 
 const courses = ref([])
+const pendingCourses = ref([])
 const loading = ref(true)
 const progressMap = ref({})
 const toast = useToast()
@@ -53,15 +79,35 @@ async function fetchProgressForCourses(courseList) {
   progressMap.value = map
 }
 
+function handlePaid(courseId) {
+  // Pindahkan course dari daftar pending dan muat ulang daftar berbayar
+  pendingCourses.value = pendingCourses.value.filter((pc) => pc.CourseId !== courseId)
+  loadCourses()
+}
+
+async function loadCourses() {
+  const [paidRes, pendingRes] = await Promise.allSettled([
+    api.get('/public/my-courses'),
+    api.get('/public/my-courses/pending'),
+  ])
+
+  if (paidRes.status === 'fulfilled') {
+    courses.value = paidRes.value.data
+    if (paidRes.value.data.length > 0) {
+      await fetchProgressForCourses(paidRes.value.data)
+    }
+  }
+  if (pendingRes.status === 'fulfilled') {
+    pendingCourses.value = pendingRes.value.data
+  }
+  if (paidRes.status === 'rejected' && pendingRes.status === 'rejected') {
+    toast.error('Failed to load your courses')
+  }
+}
+
 onMounted(async () => {
   try {
-    const { data } = await api.get('/public/my-courses')
-    courses.value = data
-    if (data.length > 0) {
-      await fetchProgressForCourses(data)
-    }
-  } catch {
-    toast.error('Failed to load your courses')
+    await loadCourses()
   } finally {
     loading.value = false
   }

@@ -52,7 +52,7 @@
           <img v-if="course.thumbnailUrl" :src="course.thumbnailUrl" :alt="course.name" class="w-full aspect-video object-cover rounded-xl" />
 
           <div>
-            <div class="text-3xl font-heading font-bold text-gray-900">{{ formatPrice(course.price) }}</div>
+            <div class="text-3xl font-heading font-bold text-gray-900">{{ isFree ? 'Gratis' : formatPrice(course.price) }}</div>
             <div class="flex items-center gap-2 mt-2">
               <div class="flex text-yellow-400 text-sm">{{ '★'.repeat(Math.round(course.avgRating || 0)) }}{{ '☆'.repeat(10 - Math.round(course.avgRating || 0)) }}</div>
               <span class="text-sm text-gray-500">{{ course.avgRating ? `${course.avgRating}/10` : 'No ratings yet' }}</span>
@@ -70,7 +70,9 @@
             </div>
           </div>
 
-          <button v-if="auth.isUser" @click="goToBuy" class="btn-brand w-full py-3">Purchase Course</button>
+          <button v-if="auth.isUser" @click="handleAction" :disabled="enrolling" class="btn-brand w-full py-3">
+            {{ enrolling ? 'Processing...' : (isFree ? 'Enroll Gratis' : 'Purchase Course') }}
+          </button>
           <RouterLink v-else-if="!auth.isLoggedIn" to="/login" class="btn-primary w-full py-3 text-center">Log in to Purchase</RouterLink>
 
           <!-- Video List -->
@@ -106,16 +108,37 @@ const toast = useToast()
 
 const course = ref(null)
 const loading = ref(true)
+const enrolling = ref(false)
 
 const firstVideoComments = computed(() => course.value?.Videos?.[0]?.Comments || [])
 const difficultyClass = computed(() => ({ easy: 'badge-easy', medium: 'badge-medium', hard: 'badge-hard' }[course.value?.difficulty] ?? 'badge-easy'))
+const isFree = computed(() => !course.value?.price || Number(course.value.price) <= 0)
 
 function formatPrice(price) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
 }
 
-async function goToBuy() {
-  router.push(`/buy/${course.value.id}`)
+async function handleAction() {
+  // Course berbayar -> ke halaman pembayaran. Course gratis -> langsung enroll.
+  if (!isFree.value) {
+    return router.push(`/buy/${course.value.id}`)
+  }
+
+  enrolling.value = true
+  try {
+    await api.post(`/public/my-courses/${course.value.id}`)
+    toast.success('Berhasil! Course gratis sudah ditambahkan.')
+    router.push('/my-courses')
+  } catch (err) {
+    const msg = err.response?.data?.message || ''
+    if (msg.toLowerCase().includes('already')) {
+      router.push('/my-courses')
+    } else {
+      toast.error(msg || 'Gagal menambahkan course.')
+    }
+  } finally {
+    enrolling.value = false
+  }
 }
 
 onMounted(async () => {

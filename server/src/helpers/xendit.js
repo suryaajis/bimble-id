@@ -1,140 +1,149 @@
 const axios = require('axios')
 const { UserCourse, Course } = require('../models')
 
-const xenditEwalletClient = axios.create({
-  baseURL: 'https://api.xendit.co/ewallets/charges',
+// Xendit Unified Payment API v3
+// Docs: https://docs.xendit.co/apidocs/create-payment-request
+const xenditClient = axios.create({
+  baseURL: 'https://api.xendit.co/v3',
   auth: { username: process.env.XENDIT_API_KEY, password: '' },
+  headers: { 'api-version': '2024-11-11' },
 })
 
-const xenditQrisClient = axios.create({
-  baseURL: 'https://api.xendit.co/qr_codes',
-  auth: { username: process.env.XENDIT_API_KEY, password: '' },
-})
-
-// Config per payment method
+// Konfigurasi per metode. `flow` menentukan channel_properties yang dikirim:
+//  - mobile   : OVO -> push ke app, butuh nomor HP (mobile_number)
+//  - redirect : DANA/GOPAY/SHOPEEPAY -> user diarahkan ke halaman/app pembayaran
+//  - qris     : tampilkan QR string untuk discan
 const PAYMENT_CONFIG = {
-  OVO: { channelCode: 'ID_OVO', requiresPhone: true, type: 'ewallet' },
-  GOPAY: { channelCode: 'ID_GOPAY', requiresPhone: true, type: 'ewallet' },
-  DANA: { channelCode: 'ID_DANA', requiresPhone: true, type: 'ewallet' },
-  SHOPEEPAY: { channelCode: 'ID_SHOPEEPAY', requiresPhone: false, type: 'ewallet' },
-  QRIS: { type: 'qris' },
+  OVO: { channelCode: 'OVO', flow: 'mobile' },
+  DANA: { channelCode: 'DANA', flow: 'redirect' },
+  GOPAY: { channelCode: 'GOPAY', flow: 'redirect' },
+  SHOPEEPAY: { channelCode: 'SHOPEEPAY', flow: 'redirect' },
+  QRIS: { channelCode: 'QRIS', flow: 'qris' },
 }
 
-const ewalletCharge = async (req, res, next) => {
+const buildChannelProperties = (flow, phoneNumber) => {
+  switch (flow) {
+    case 'mobile':
+      return { mobile_number: phoneNumber }
+    case 'redirect':
+      return {
+        success_return_url: `${process.env.CLIENT_URL}/my-courses`,
+        failure_return_url: `${process.env.CLIENT_URL}/buy`,
+      }
+    case 'qris':
+      return { expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() } // 30 menit
+    default:
+      return {}
+  }
+}
+
+// Ambil value dari actions[] berdasarkan descriptor (QR_STRING / WEB_URL / DEEPLINK_URL)
+const findAction = (actions = [], descriptor) =>
+  actions.find((a) => a.descriptor === descriptor)?.value ?? null
+
+// Buat payment request untuk semua metode (OVO/DANA/GOPAY/SHOPEEPAY/QRIS)
+const createPayment = async (req, res, next) => {
   try {
     const { phoneNumber, userCourseId, paymentMethod = 'OVO' } = req.body
 
     const method = paymentMethod.toUpperCase()
     const config = PAYMENT_CONFIG[method]
-    if (!config || config.type !== 'ewallet') throw { name: 'InvalidPaymentMethod' }
-    if (config.requiresPhone && !phoneNumber) throw { name: 'PhoneNumberRequired' }
+    if (!config) throw { name: 'InvalidPaymentMethod' }
+    if (config.flow === 'mobile' && !phoneNumber) throw { name: 'PhoneNumberRequired' }
 
     const userCourse = await UserCourse.findOne({
-      where: { id: Number(userCourseId) },
+      where: { id: Number(userCourseId), UserId: req.user.id },
       include: [{ model: Course }],
     })
     if (!userCourse) throw { name: 'CourseNotFound' }
 
+    // Course gratis (harga 0/null) tidak perlu charge ke Xendit — langsung lunas
+    const isFree = !userCourse.Course?.price || Number(userCourse.Course.price) <= 0
+    if (isFree) {
+      if (!userCourse.isPaid) await userCourse.update({ isPaid: true })
+      return res.json({ status: 'SUCCEEDED', free: true })
+    }
+
+    if (userCourse.isPaid) throw { name: 'CourseAlreadyPurchased' }
+
     const referenceId = `${req.user.email}-${userCourseId}-${Date.now()}`
 
-    const channelProperties = config.requiresPhone
-      ? { mobile_number: phoneNumber }
-      : { success_redirect_url: `${process.env.CLIENT_URL}/my-courses` }
-
-    const { data } = await xenditEwalletClient.post('/', {
+    const { data } = await xenditClient.post('/payment_requests', {
       reference_id: referenceId,
+      type: 'PAY',
+      country: 'ID',
       currency: 'IDR',
-      amount: userCourse.Course.price,
-      checkout_method: 'ONE_TIME_PAYMENT',
+      request_amount: userCourse.Course.price,
       channel_code: config.channelCode,
-      channel_properties: channelProperties,
+      channel_properties: buildChannelProperties(config.flow, phoneNumber),
     })
 
-    await UserCourse.update(
-      { chargeId: data.id, referenceId: data.reference_id, paymentMethod: method },
-      { where: { id: Number(userCourseId) } }
-    )
+    await userCourse.update({
+      chargeId: data.payment_request_id,
+      referenceId: data.reference_id,
+      paymentMethod: method,
+    })
 
-    res.json(data)
+    res.json({
+      paymentRequestId: data.payment_request_id,
+      status: data.status,
+      qrString: findAction(data.actions, 'QR_STRING'),
+      redirectUrl: findAction(data.actions, 'WEB_URL') ?? findAction(data.actions, 'DEEPLINK_URL'),
+    })
   } catch (err) {
+    console.log(err)
     next(err.response ?? err)
   }
 }
 
-const qrisCharge = async (req, res, next) => {
+// Cek status pembayaran langsung ke Xendit (tanpa menunggu webhook).
+// Berguna untuk tombol "Cek Status" / retry, terutama di lokal/dev di mana
+// webhook tidak bisa masuk tanpa URL publik.
+const checkStatus = async (req, res, next) => {
   try {
-    const { userCourseId } = req.body
+    const { userCourseId } = req.params
 
     const userCourse = await UserCourse.findOne({
-      where: { id: Number(userCourseId) },
-      include: [{ model: Course }],
+      where: { id: Number(userCourseId), UserId: req.user.id },
     })
     if (!userCourse) throw { name: 'CourseNotFound' }
 
-    const referenceId = `${req.user.email}-${userCourseId}-${Date.now()}`
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30 menit
+    if (userCourse.isPaid) return res.json({ isPaid: true, status: 'SUCCEEDED' })
+    if (!userCourse.chargeId) return res.json({ isPaid: false, status: 'UNPAID' })
 
-    const { data } = await xenditQrisClient.post('/', {
-      reference_id: referenceId,
-      type: 'DYNAMIC',
-      currency: 'IDR',
-      amount: userCourse.Course.price,
-      expires_at: expiresAt.toISOString(),
-    })
+    const { data } = await xenditClient.get(`/payment_requests/${userCourse.chargeId}`)
+    if (data.status === 'SUCCEEDED') {
+      await userCourse.update({ isPaid: true })
+    }
 
-    await UserCourse.update(
-      { chargeId: data.id, referenceId: data.reference_id, paymentMethod: 'QRIS' },
-      { where: { id: Number(userCourseId) } }
-    )
-
-    res.json(data)
+    res.json({ isPaid: data.status === 'SUCCEEDED', status: data.status })
   } catch (err) {
     next(err.response ?? err)
   }
 }
 
-// Unified webhook handler untuk semua e-wallet
-const ewalletStatus = async (req, res, next) => {
+// Webhook v3: satu handler untuk semua metode.
+// Konfigurasi di Xendit Dashboard -> Webhooks, kirim event "payment.succeeded"
+// (dan opsional payment.failed/expired) ke endpoint POST /payment/webhook.
+const paymentWebhook = async (req, res, next) => {
   try {
     const callbackToken = req.headers['x-callback-token']
     if (callbackToken !== process.env.XENDIT_VERIFICATION_TOKEN) throw { name: 'Forbidden' }
 
-    const { id: chargeId, reference_id, status } = req.body.data
-    const parts = reference_id.split('-')
-    const userCourseId = Number(parts[1])
+    const { event } = req.body
+    const data = req.body.data ?? {}
+    const referenceId = data.reference_id ?? ''
+    const userCourseId = Number(referenceId.split('-')[1])
 
-    if (status === 'SUCCEEDED') {
+    const succeeded = data.status === 'SUCCEEDED' || event === 'payment.succeeded'
+    if (succeeded && userCourseId) {
       await UserCourse.update({ isPaid: true }, { where: { id: userCourseId } })
     }
 
-    res.json({ message: `UserCourse ${userCourseId} updated. Status: ${status}` })
+    res.json({ message: `UserCourse ${userCourseId} processed. Event: ${event}, Status: ${data.status}` })
   } catch (err) {
     next(err)
   }
 }
 
-// Webhook handler untuk QRIS
-const qrisStatus = async (req, res, next) => {
-  try {
-    const callbackToken = req.headers['x-callback-token']
-    if (callbackToken !== process.env.XENDIT_VERIFICATION_TOKEN) throw { name: 'Forbidden' }
-
-    const { reference_id, status } = req.body.data
-    const parts = reference_id.split('-')
-    const userCourseId = Number(parts[1])
-
-    if (status === 'SUCCEEDED') {
-      await UserCourse.update({ isPaid: true }, { where: { id: userCourseId } })
-    }
-
-    res.json({ message: `QRIS UserCourse ${userCourseId} updated. Status: ${status}` })
-  } catch (err) {
-    next(err)
-  }
-}
-
-// Keep backward compat alias
-const ovoCharge = ewalletCharge
-const ovoStatus = ewalletStatus
-
-module.exports = { ovoCharge, ovoStatus, ewalletCharge, ewalletStatus, qrisCharge, qrisStatus }
+module.exports = { createPayment, checkStatus, paymentWebhook }

@@ -30,6 +30,7 @@ router.get('/me', UserController.getMe)
 router.put('/me', UserController.updateMe)
 
 router.get('/my-courses', UserCourseController.getAll)
+router.get('/my-courses/pending', UserCourseController.getPending)
 router.get('/my-courses/:courseId', UserCourseController.getById)
 router.post('/my-courses/:courseId', UserCourseController.enroll)
 

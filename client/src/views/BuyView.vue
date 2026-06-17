@@ -56,9 +56,9 @@
             <p class="text-xs text-gray-400 mt-1">Enter without leading 0 (e.g. 8123456789)</p>
           </div>
 
-          <!-- ShopeePay info -->
-          <div v-if="selectedMethod === 'SHOPEEPAY'" class="mb-4 p-3 bg-orange-50 rounded-lg">
-            <p class="text-sm text-orange-700">Push notifikasi akan dikirim ke app ShopeePay kamu</p>
+          <!-- Redirect info (DANA/GoPay/ShopeePay) -->
+          <div v-if="isRedirect" class="mb-4 p-3 bg-orange-50 rounded-lg">
+            <p class="text-sm text-orange-700">Kamu akan diarahkan ke halaman {{ selectedMethod }} untuk menyelesaikan pembayaran.</p>
           </div>
 
           <!-- QRIS info -->
@@ -92,6 +92,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import QRCode from 'qrcode'
 import api from '@/api'
 
 const route = useRoute()
@@ -105,10 +106,12 @@ const error = ref('')
 const selectedMethod = ref('OVO')
 const qrCodeUrl = ref(null)
 
+// Hanya OVO yang butuh nomor HP (push ke app). DANA/GoPay/ShopeePay pakai redirect,
+// QRIS pakai scan QR — sesuai Xendit Payment API v3.
 const paymentMethods = [
   { value: 'OVO', label: 'OVO', icon: '💜', requiresPhone: true },
-  { value: 'GOPAY', label: 'GoPay', icon: '💚', requiresPhone: true },
-  { value: 'DANA', label: 'DANA', icon: '💙', requiresPhone: true },
+  { value: 'GOPAY', label: 'GoPay', icon: '💚', requiresPhone: false },
+  { value: 'DANA', label: 'DANA', icon: '💙', requiresPhone: false },
   { value: 'SHOPEEPAY', label: 'ShopeePay', icon: '🧡', requiresPhone: false },
   { value: 'QRIS', label: 'QRIS', icon: '📷', requiresPhone: false },
 ]
@@ -118,22 +121,30 @@ const requiresPhone = computed(() => {
   return method ? method.requiresPhone : true
 })
 
+const isRedirect = computed(() => ['DANA', 'GOPAY', 'SHOPEEPAY'].includes(selectedMethod.value))
+
 function formatPrice(price) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price)
 }
 
 async function doCharge(userCourseId) {
-  if (selectedMethod.value === 'QRIS') {
-    const { data } = await api.post('/payment/qris/charge', { userCourseId })
-    qrCodeUrl.value = data.qr_code_url
+  const { data } = await api.post('/payment/charge', {
+    userCourseId,
+    paymentMethod: selectedMethod.value,
+    phoneNumber: requiresPhone.value ? `+62${phoneNumber.value}` : undefined,
+  })
+
+  if (data.qrString) {
+    // QRIS — render qr_string mentah dari Xendit menjadi gambar QR
+    qrCodeUrl.value = await QRCode.toDataURL(data.qrString, { width: 240, margin: 1 })
     toast.success('QRIS siap! Scan QR Code untuk menyelesaikan pembayaran.')
+  } else if (data.redirectUrl) {
+    // DANA/GoPay/ShopeePay — arahkan user ke halaman/app pembayaran
+    toast.info('Mengarahkan ke halaman pembayaran...')
+    window.location.href = data.redirectUrl
   } else {
-    await api.post('/payment/ewallet/charge', {
-      userCourseId,
-      paymentMethod: selectedMethod.value,
-      phoneNumber: requiresPhone.value ? `+62${phoneNumber.value}` : undefined,
-    })
-    toast.success(`Payment request sent! Check your ${selectedMethod.value} app.`)
+    // OVO — push notifikasi ke aplikasi
+    toast.success(`Cek aplikasi ${selectedMethod.value} kamu untuk menyelesaikan pembayaran.`)
     router.push('/my-courses')
   }
 }
@@ -144,12 +155,21 @@ async function handleBuy() {
   qrCodeUrl.value = null
   try {
     const { data: enrollment } = await api.post(`/public/my-courses/${route.params.courseId}`)
+    // Course gratis langsung lunas — tidak perlu pembayaran
+    if (enrollment.isPaid) {
+      toast.success('Course gratis, langsung terbuka!')
+      return router.push('/my-courses')
+    }
     await doCharge(enrollment.id)
   } catch (err) {
     const msg = err.response?.data?.message || ''
-    if (msg.includes('Already')) {
+    if (msg.toLowerCase().includes('already')) {
       try {
         const { data: existing } = await api.get(`/public/my-courses/${route.params.courseId}`)
+        if (existing.isPaid) {
+          toast.success('Course gratis, langsung terbuka!')
+          return router.push('/my-courses')
+        }
         await doCharge(existing.id)
       } catch (innerErr) {
         error.value = innerErr.response?.data?.message || 'Payment failed.'
@@ -166,6 +186,10 @@ onMounted(async () => {
   try {
     const { data } = await api.get(`/public/courses/${route.params.courseId}`)
     course.value = data
+    // Course gratis tidak perlu form pembayaran — langsung enroll & buka
+    if (!data.price || Number(data.price) <= 0) {
+      await handleBuy()
+    }
   } catch {
     router.push('/courses')
   }
