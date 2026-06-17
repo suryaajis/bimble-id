@@ -1,8 +1,28 @@
 # Bimble
 
-> **Be Smart, Be Humble** — A modern full-stack e-learning platform.
+> **Be Smart, Be Humble** — A modern full-stack e-learning marketplace.
 
-Bimble is a complete rewrite of the original Bimble platform, built with the latest web technologies. Users can browse, purchase, and watch courses; admins can manage all content through a dedicated dashboard.
+## What is Bimble?
+
+**Bimble** is an online learning platform where people can **learn new skills** and where instructors can **teach and earn**. Think of it as a focused, self-hostable alternative to platforms like Udemy or Coursera, built for the Indonesian market (prices in IDR, OVO e-wallet payments).
+
+The platform serves three kinds of people:
+
+- **Learners** browse a catalog of courses, preview the first lesson for free, buy a course with OVO, then watch the full video lessons, leave comments, and rate what they finished. They can also follow structured, role-based **learning roadmaps** (e.g. *Frontend Developer*, *Data Analyst*) that chain courses and external resources into a guided path.
+- **Instructors** create their own courses (uploading MP4 lessons or linking YouTube videos), publish them for sale, and track their **students, sales, and earnings** from an instructor dashboard. New courses are reviewed by an admin before going live.
+- **Admins** (the platform owner / internal team) oversee everything: approve or reject instructor courses, manage categories and roadmaps, manage users and their roles, and curate the whole catalog.
+
+Bimble Revamp is a **complete rewrite** of the original Bimble project, rebuilt from the ground up with a modern stack — Vue 3 + Vite on the front end, Express 5 + Sequelize/PostgreSQL on the back end — and hardened with JWT auth, role-based access control, rate limiting, and security headers. See [Improvements Over Original](#improvements-over-original) for the full before/after.
+
+### Account Types
+
+| Role | Who it's for | What they can do |
+|---|---|---|
+| **User** | Learners (default at signup) | Browse, preview, purchase, watch, comment, rate, follow roadmaps |
+| **Instructor** | Course creators (chosen at signup) | Create/edit their own courses & videos, publish for sale, view sales & earnings |
+| **Admin** | Platform owner / internal team | Approve courses, manage categories, roadmaps, users, and the full catalog |
+
+> A course is only publicly sellable when it is **published** by its instructor (`status = active`) **and approved** by an admin (`approvalStatus = approved`).
 
 ---
 
@@ -179,12 +199,22 @@ bimble-revamp/
 - **Google Login** — Sign in with Google OAuth in one click
 - **Profile Update** — Change name and email
 
+### For Instructors
+- **Become an Instructor** — Choose "Teach" at signup to register as an instructor
+- **Create Courses** — Build courses with MP4 uploads and/or YouTube lessons
+- **Submit for Review** — New and edited courses go to the admin queue (`approvalStatus: pending`) before they appear in the catalog
+- **Publish Toggle** — Show/hide an approved course from the catalog (active/inactive)
+- **Own-content Only** — Instructors can manage only the courses they own (enforced server-side)
+- **Sales & Earnings** — Instructor dashboard with course counts, student count, sales list, and total earnings
+
 ### For Admins
 - **Dashboard** — Live counts for courses, users, categories, active courses
+- **Course Moderation** — Approve or reject instructor-submitted courses
 - **Course Management** — Create, edit, toggle active/inactive status
 - **Video Management** — Upload MP4 videos (≤25MB) to ImageKit, rename, delete
 - **Category Management** — Add/delete categories (cascades to courses)
-- **User Management** — View all registered users with search
+- **Roadmap Management** — Create skill domains, roadmaps, and ordered steps
+- **User Management** — View all users, search, and promote/demote between User and Instructor
 
 ---
 

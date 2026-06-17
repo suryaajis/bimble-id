@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Course.belongsToMany(models.User, { through: 'UserCourses', foreignKey: 'CourseId' })
       Course.belongsTo(models.Category, { foreignKey: 'CategoryId' })
+      Course.belongsTo(models.User, { foreignKey: 'UserId', as: 'Instructor' })
       Course.hasMany(models.Video, { foreignKey: 'CourseId' })
       Course.hasMany(models.Rating, { foreignKey: 'CourseId' })
       Course.hasMany(models.RoadmapStep, { foreignKey: 'CourseId' })
@@ -58,6 +59,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('active', 'inactive'),
       allowNull: false,
       defaultValue: 'active',
+    },
+    approvalStatus: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      allowNull: false,
+      defaultValue: 'approved',
+      validate: {
+        isIn: { args: [['pending', 'approved', 'rejected']], msg: 'Approval status must be pending, approved, or rejected' },
+      },
+    },
+    // Owning instructor (null for admin-created/legacy courses)
+    UserId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     CategoryId: {
       type: DataTypes.INTEGER,

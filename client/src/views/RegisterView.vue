@@ -12,6 +12,29 @@
       <div class="card p-8">
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">I want to</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="form.role = 'User'"
+                :class="form.role === 'User' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+                class="rounded-xl border-2 px-4 py-3 text-left transition"
+              >
+                <span class="block font-semibold text-sm">Learn</span>
+                <span class="block text-xs text-gray-500 mt-0.5">Take courses</span>
+              </button>
+              <button
+                type="button"
+                @click="form.role = 'Instructor'"
+                :class="form.role === 'Instructor' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+                class="rounded-xl border-2 px-4 py-3 text-left transition"
+              >
+                <span class="block font-semibold text-sm">Teach</span>
+                <span class="block text-xs text-gray-500 mt-0.5">Create & sell courses</span>
+              </button>
+            </div>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
             <input v-model="form.name" type="text" class="input-field" placeholder="John Doe" required />
           </div>
@@ -54,7 +77,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const toast = useToast()
 
-const form = ref({ name: '', email: '', password: '' })
+const form = ref({ name: '', email: '', password: '', role: 'User' })
 const loading = ref(false)
 const error = ref('')
 
@@ -62,7 +85,7 @@ async function handleRegister() {
   loading.value = true
   error.value = ''
   try {
-    await auth.register(form.value.name, form.value.email, form.value.password)
+    await auth.register(form.value.name, form.value.email, form.value.password, form.value.role)
     toast.success('Account created! Please log in.')
     router.push('/login')
   } catch (err) {
