@@ -22,6 +22,8 @@ const errorHandler = (err, req, res, next) => {
     RoadmapAlreadyEnrolled: [400, 'You are already enrolled in this roadmap'],
     RoadmapNotEnrolled: [403, 'You are not enrolled in this roadmap'],
     StepAlreadyCompleted: [400, 'You have already completed this step'],
+    InvalidPaymentMethod: [400, 'Invalid payment method. Supported: OVO, GOPAY, DANA, SHOPEEPAY, QRIS'],
+    PhoneNumberRequired: [400, 'Phone number is required for this payment method'],
   }
 
   const [code, message] = errors[err.name] ?? [500, 'Internal server error']
