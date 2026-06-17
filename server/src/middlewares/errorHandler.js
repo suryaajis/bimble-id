@@ -19,6 +19,7 @@ const errorHandler = (err, req, res, next) => {
     AlreadyRated: [400, 'You have already rated this course'],
     InvalidFileFormat: [400, 'File must be in MP4 format'],
     InvalidFileSize: [400, 'File size must not exceed 25MB'],
+    ArticleNotFound: [404, 'Article not found'],
     RoadmapNotFound: [404, 'Roadmap not found'],
     RoadmapStepNotFound: [404, 'Roadmap step not found'],
     SkillDomainNotFound: [404, 'Skill domain not found'],

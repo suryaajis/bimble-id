@@ -6,6 +6,7 @@ const UserCourseController = require('../controllers/public/UserCourseController
 const CommentController = require('../controllers/public/CommentController')
 const RatingController = require('../controllers/public/RatingController')
 const RoadmapController = require('../controllers/public/RoadmapController')
+const ArticleController = require('../controllers/public/ArticleController')
 const CertificateController = require('../controllers/public/CertificateController')
 const ProgressController = require('../controllers/public/ProgressController')
 const authentication = require('../middlewares/authentication')
@@ -23,6 +24,9 @@ router.get('/ratings/:courseId', RatingController.getCourseRating)
 router.get('/skill-domains', RoadmapController.getSkillDomains)
 router.get('/roadmaps', RoadmapController.getAll)
 router.get('/roadmaps/:roadmapId', RoadmapController.getById)
+
+router.get('/articles', ArticleController.getAll)
+router.get('/articles/:slug', ArticleController.getBySlug)
 
 router.use(authentication)
 

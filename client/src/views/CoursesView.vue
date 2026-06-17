@@ -97,6 +97,13 @@ import { useDebounceFn } from '@vueuse/core'
 import CourseCard from '@/components/CourseCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import api from '@/api'
+import { useSeoMeta } from '@/composables/useSeoMeta'
+
+useSeoMeta({
+  title: 'Semua Kursus',
+  description: 'Temukan kursus pemrograman terbaik di Bimble.id. Filter berdasarkan kategori, tingkat kesulitan, dan harga.',
+  keywords: 'kursus online, belajar coding, javascript, python, react, vue',
+})
 
 const route = useRoute()
 const router = useRouter()

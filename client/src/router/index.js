@@ -4,6 +4,8 @@ import { useAuthStore } from '@/stores/auth'
 const routes = [
   { path: '/', name: 'Home', component: () => import('@/views/HomeView.vue') },
   { path: '/about', name: 'About', component: () => import('@/views/AboutView.vue') },
+  { path: '/articles', name: 'Articles', component: () => import('@/views/ArticlesView.vue') },
+  { path: '/articles/:slug', name: 'ArticleDetail', component: () => import('@/views/ArticleDetailView.vue') },
   {
     path: '/courses',
     name: 'Courses',
@@ -126,6 +128,9 @@ const routes = [
       { path: 'roadmaps/:roadmapId', name: 'AdminRoadmapDetail', component: () => import('@/views/admin/AdminRoadmapDetailView.vue') },
       { path: 'roadmaps/:roadmapId/edit', name: 'UpdateRoadmap', component: () => import('@/views/admin/UpdateRoadmapView.vue') },
       { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/AdminUsersView.vue') },
+      { path: 'articles', name: 'AdminArticles', component: () => import('@/views/admin/AdminArticlesView.vue') },
+      { path: 'articles/add', name: 'AddArticle', component: () => import('@/views/admin/AddArticleView.vue') },
+      { path: 'articles/:articleId/edit', name: 'UpdateArticle', component: () => import('@/views/admin/UpdateArticleView.vue') },
     ],
   },
   {

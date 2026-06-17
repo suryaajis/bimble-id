@@ -93,13 +93,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { useAuthStore } from '@/stores/auth'
 import { videoSrc as getVideoSrc } from '@/composables/useYoutube'
 import api from '@/api'
+import { useSeoMeta } from '@/composables/useSeoMeta'
+import { useJsonLd } from '@/composables/useJsonLd'
 
 const route = useRoute()
 const router = useRouter()
@@ -109,6 +111,40 @@ const toast = useToast()
 const course = ref(null)
 const loading = ref(true)
 const enrolling = ref(false)
+
+const seoOptions = computed(() => course.value ? {
+  title: course.value.name,
+  description: course.value.description?.slice(0, 160),
+  image: course.value.thumbnailUrl,
+  type: 'website',
+  keywords: `${course.value.name}, kursus online, bimble`,
+} : null)
+
+useSeoMeta(seoOptions)
+
+watch(course, (val) => {
+  if (!val) return
+  const existing = document.querySelector('script[data-course-ld]')
+  if (existing) existing.remove()
+  const script = document.createElement('script')
+  script.type = 'application/ld+json'
+  script.setAttribute('data-course-ld', 'true')
+  script.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: val.name,
+    description: val.description,
+    provider: { '@type': 'Organization', name: 'Bimble.id' },
+    offers: {
+      '@type': 'Offer',
+      price: val.price,
+      priceCurrency: 'IDR',
+      availability: 'https://schema.org/InStock',
+    },
+    courseLevel: val.difficulty,
+  })
+  document.head.appendChild(script)
+}, { immediate: true })
 
 const firstVideoComments = computed(() => course.value?.Videos?.[0]?.Comments || [])
 const difficultyClass = computed(() => ({ easy: 'badge-easy', medium: 'badge-medium', hard: 'badge-hard' }[course.value?.difficulty] ?? 'badge-easy'))

@@ -65,6 +65,24 @@
 </template>
 
 <script setup>
+import { useSeoMeta } from '@/composables/useSeoMeta'
+import { useJsonLd } from '@/composables/useJsonLd'
+
+useSeoMeta({
+  title: 'Platform E-Learning Indonesia',
+  description: 'Bimble.id — Belajar pemrograman, web development, dan teknologi bersama ribuan pelajar Indonesia. Kursus berkualitas dengan harga terjangkau.',
+  keywords: 'belajar coding, kursus programming, e-learning indonesia, belajar javascript, web development',
+})
+
+useJsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Bimble.id',
+  url: 'https://bimble.id',
+  description: 'Platform e-learning Indonesia untuk belajar pemrograman dan teknologi',
+  sameAs: [],
+})
+
 const stats = [
   { value: '500+', label: 'Courses' },
   { value: '10K+', label: 'Students' },
