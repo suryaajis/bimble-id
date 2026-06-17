@@ -5,7 +5,6 @@ const adminRouter = require('./adminRouter')
 const instructorRouter = require('./instructorRouter')
 const errorHandler = require('../middlewares/errorHandler')
 const authentication = require('../middlewares/authentication')
-const { ovoCharge, ovoStatus } = require('../helpers/xendit')
 const { generateSitemap } = require('../controllers/public/SitemapController')
 const { createPayment, checkStatus, paymentWebhook } = require('../helpers/xendit')
 
@@ -29,8 +28,6 @@ Disallow: /buy
 Sitemap: ${clientUrl}/sitemap.xml`)
 })
 
-router.post('/ovo/charge', authentication, ovoCharge)
-router.post('/ovo/status', ovoStatus)
 // Xendit Unified Payment API v3 — satu endpoint untuk semua metode
 router.post('/payment/charge', authentication, createPayment)
 router.get('/payment/status/:userCourseId', authentication, checkStatus)

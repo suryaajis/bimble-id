@@ -12,7 +12,7 @@
         <div class="hidden md:flex items-center gap-1">
           <RouterLink to="/" class="nav-link" :class="{ 'nav-link-active': $route.path === '/' }">Home</RouterLink>
           <RouterLink to="/about" class="nav-link" :class="{ 'nav-link-active': $route.path === '/about' }">About</RouterLink>
-          <RouterLink v-if="!auth.isAdmin" to="/articles" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/articles') }">Artikel</RouterLink>
+          <RouterLink v-if="!auth.isAdmin" to="/articles" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/articles') }">Articles</RouterLink>
           <RouterLink v-if="!auth.isAdmin && !auth.isInstructor" to="/courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/courses') }">Courses</RouterLink>
           <RouterLink v-if="!auth.isAdmin && !auth.isInstructor" to="/roadmaps" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/roadmaps') }">Roadmaps</RouterLink>
           <RouterLink v-if="auth.isUser" to="/my-courses" class="nav-link" :class="{ 'nav-link-active': $route.path.startsWith('/my-courses') }">My Courses</RouterLink>

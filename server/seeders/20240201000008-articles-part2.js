@@ -986,7 +986,7 @@ git push -u origin main
 
 <h3>4. Konfigurasi Environment Variables</h3>
 <pre><code># Di Railway dashboard → Service → Variables
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+DATABASE_URL=postgres://username:password@host:port/dbname
 JWT_SECRET=your-super-secret-key-yang-panjang-dan-aman
 NODE_ENV=production
 </code></pre>
