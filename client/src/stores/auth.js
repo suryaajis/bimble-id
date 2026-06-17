@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => role.value === 'Admin')
+  const isInstructor = computed(() => role.value === 'Instructor')
   const isUser = computed(() => role.value === 'User')
 
   function setAuth(data) {
@@ -41,8 +42,8 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  async function register(name, email, password) {
-    const { data } = await api.post('/public/register', { name, email, password })
+  async function register(name, email, password, role = 'User') {
+    const { data } = await api.post('/public/register', { name, email, password, role })
     return data
   }
 
@@ -58,5 +59,5 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  return { token, role, name, isLoggedIn, isAdmin, isUser, setAuth, clearAuth, login, googleLogin, register, fetchMe, updateMe }
+  return { token, role, name, isLoggedIn, isAdmin, isInstructor, isUser, setAuth, clearAuth, login, googleLogin, register, fetchMe, updateMe }
 })

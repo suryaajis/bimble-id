@@ -1,20 +1,24 @@
-const { Course, Category, Video, sequelize } = require('../../models')
+const { Course, Category, Video, User, sequelize } = require('../../models')
 const { Op } = require('sequelize')
 const { toEmbedUrl } = require('../../helpers/youtube')
 
 class AdminCourseController {
   static async getAll(req, res, next) {
     try {
-      const { page, search } = req.query
+      const { page, search, approval } = req.query
       const limit = 10
 
       const where = {}
       if (search) where.name = { [Op.iLike]: `%${search}%` }
+      if (approval) where.approvalStatus = approval
 
       const options = {
         where,
-        include: [{ model: Category, attributes: ['id', 'name'] }],
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
+        include: [
+          { model: Category, attributes: ['id', 'name'] },
+          { model: User, as: 'Instructor', attributes: ['id', 'name'] },
+        ],
+        attributes: { exclude: ['updatedAt'] },
         order: [['createdAt', 'DESC']],
       }
 
@@ -37,6 +41,7 @@ class AdminCourseController {
       const course = await Course.findByPk(req.params.courseId, {
         include: [
           { model: Category, attributes: ['id', 'name'] },
+          { model: User, as: 'Instructor', attributes: ['id', 'name'] },
           { model: Video, attributes: { exclude: ['createdAt', 'updatedAt'] } },
         ],
       })
@@ -52,8 +57,9 @@ class AdminCourseController {
     try {
       const { name, description, price, thumbnailUrl, difficulty, CategoryId, Videos } = req.body
 
+      // Admin-created courses are owned by the admin and auto-approved.
       const course = await Course.create(
-        { name, description, price, thumbnailUrl, difficulty, status: 'active', CategoryId },
+        { name, description, price, thumbnailUrl, difficulty, status: 'active', approvalStatus: 'approved', UserId: req.user.id, CategoryId },
         { transaction: t }
       )
 
@@ -105,6 +111,22 @@ class AdminCourseController {
       const course = await Course.findByPk(req.params.courseId)
       if (!course) throw { name: 'CourseNotFound' }
       await course.update({ status: req.body.status })
+      res.json(course)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  // Admin moderation: approve or reject an instructor-submitted course.
+  static async updateApproval(req, res, next) {
+    try {
+      const { approvalStatus } = req.body
+      if (!['pending', 'approved', 'rejected'].includes(approvalStatus)) throw { name: 'InvalidApprovalStatus' }
+
+      const course = await Course.findByPk(req.params.courseId)
+      if (!course) throw { name: 'CourseNotFound' }
+
+      await course.update({ approvalStatus })
       res.json(course)
     } catch (err) {
       next(err)

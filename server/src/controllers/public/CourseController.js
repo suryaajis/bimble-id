@@ -8,7 +8,8 @@ class CourseController {
       const limit = 12
       const offset = (Number(page) - 1) * limit
 
-      const where = { status: 'active' }
+      // Only published (active) AND admin-approved courses are publicly listed.
+      const where = { status: 'active', approvalStatus: 'approved' }
       if (search) where.name = { [Op.iLike]: `%${search}%` }
       if (categoryId) where.CategoryId = categoryId
       if (difficulty) where.difficulty = difficulty
@@ -17,7 +18,10 @@ class CourseController {
 
       const { count, rows } = await Course.findAndCountAll({
         where,
-        include: [{ model: Category, attributes: ['id', 'name'] }],
+        include: [
+          { model: Category, attributes: ['id', 'name'] },
+          { model: User, as: 'Instructor', attributes: ['id', 'name'] },
+        ],
         attributes: { exclude: ['createdAt', 'updatedAt'] },
         order,
         limit,
@@ -40,6 +44,7 @@ class CourseController {
       const course = await Course.findByPk(req.params.courseId, {
         include: [
           { model: Category, attributes: ['id', 'name'] },
+          { model: User, as: 'Instructor', attributes: ['id', 'name'] },
           {
             model: Video,
             attributes: { exclude: ['createdAt', 'updatedAt'] },
@@ -57,7 +62,8 @@ class CourseController {
         order: [[Video, 'id', 'ASC']],
       })
 
-      if (!course) throw { name: 'CourseNotFound' }
+      // Hide courses that are not publicly sellable (unpublished or not yet approved).
+      if (!course || course.status !== 'active' || course.approvalStatus !== 'approved') throw { name: 'CourseNotFound' }
 
       const courseData = course.toJSON()
       const avgRating = courseData.Ratings?.length
